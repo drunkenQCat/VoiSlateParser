@@ -3,10 +3,63 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:VoiSlateParser.ViewModels"
         xmlns:local="clr-namespace:VoiSlateParser"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
+    <Window.DataContext>
+        <vm:MainWindowViewModel />
+    </Window.DataContext>
+     <hc:Interaction.Triggers>
+        <hc:EventTrigger EventName="Loaded">
+            <hc:InvokeCommandAction Command="{Binding LoadItemsCommand}" />
+        </hc:EventTrigger>
+    </hc:Interaction.Triggers>
 
-    </Grid>
+    <StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="10">
+            <Button Content="导入场记" Margin="0,0,10,0" Click="{Binding GetJsonPathCommand}" />
+            <Button Content="录音文件夹" Margin="0,0,10,0" Click="{Binding GetRecordPathCommand}" />
+            <!-- <Button Content="Save" Margin="0,0,10,0" Click="SaveButton_Click" /> -->
+            <!-- <Button Content="Load" Margin="0,0,10,0" Click="LoadButton_Click" /> -->
+        </StackPanel>
+
+        <ListView 
+            Margin="10" 
+            ItemsSource="{Binding LogItemList}"
+            SelectedItem="{Binding SelectedItem}"
+        >
+            
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Filename" DisplayMemberBinding="{Binding fileName}" />
+                    <GridViewColumn Header="Scene" DisplayMemberBinding="{Binding scn}" />
+                    <GridViewColumn Header="Shot" DisplayMemberBinding="{Binding sht}" />
+                    <GridViewColumn Header="Take" DisplayMemberBinding="{Binding tk}" />
+                    <GridViewColumn Header="Take Note" DisplayMemberBinding="{Binding tkNote}" />
+                    <GridViewColumn Header="Shot Note" DisplayMemberBinding="{Binding shtNote}" />
+                    <GridViewColumn Header="Scene Note" DisplayMemberBinding="{Binding scnNote}" />
+                    <GridViewColumn Header="OK Take" DisplayMemberBinding="{Binding okTk}" />
+                    <GridViewColumn Header="OK Shot" DisplayMemberBinding="{Binding okSht}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <!-- <TabControl -->
+        <!--     SelectedIndex="0" -->
+        <!--     > -->
+        <!--     <TabControl.ContentTemplate> -->
+        <!--         <DataTemplate> -->
+        <!--             <ContentControl -->
+        <!--                 HorizontalContentAlignment="Stretch" -->
+        <!--                 VerticalContentAlignment="Stretch" -->
+        <!--                 IsTabStop="False"/> -->
+        <!--         </DataTemplate> -->
+        <!--     </TabControl.ContentTemplate> -->
+        <!--     <TabItem Header="record"></TabItem> -->
+        <!--     <TabItem Header="video"></TabItem> -->
+        <!-- </TabControl> -->
+
+    </StackPanel>
 </Window>

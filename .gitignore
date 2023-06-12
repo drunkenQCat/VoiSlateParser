@@ -1,0 +1,16 @@
+
+obj/
+bin/
+.vscode/
+.idea/
+obj/project.assets.json
+obj/project.nuget.cache
+obj/VoiSlateParser.csproj.nuget.dgspec.json
+obj/Debug/net7.0-windows/App.g.cs
+obj/Debug/net7.0-windows/App.g.i.cs
+obj/Debug/net7.0-windows/VoiSlateParser_MarkupCompile.cache
+obj/Debug/net7.0-windows/VoiSlateParser_MarkupCompile.lref
+obj/Debug/net7.0-windows/VoiSlateParser.assets.cache
+obj/Debug/net7.0-windows/VoiSlateParser.GeneratedMSBuildEditorConfig.editorconfig
+obj/Debug/net7.0-windows/Views/MainWindow.g.cs
+.idea/.idea.VoiSlateParser.dir/.idea/.gitignore
