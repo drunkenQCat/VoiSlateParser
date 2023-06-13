@@ -9,12 +9,14 @@ public class BwfTimeCode
     FrameRate? FramRate;
     public Timecode? StartTc;
     public Timecode? EndTc;
+    public string Ubits;
 
     public BwfTimeCode(Track bwf)
     {
         this.FramRate = GetFrameRate(bwf);
         this.StartTc = GetStartTc(bwf);
         this.EndTc = GetEndTc(bwf);
+        this.Ubits = GetUbits(bwf);
     }
 
     Timecode? GetStartTc(Track bwf)
@@ -88,6 +90,13 @@ public class BwfTimeCode
         }
 
         return (rateCount, rateName, dropCount);
+    }
+
+    string GetUbits(Track bwf)
+    {
+        var Ubits = bwf.AdditionalFields["ixml.UBITS"];
+        if (Ubits == null) return null;
+        return Ubits;
     }
 
     private bool _isInteger(double num)

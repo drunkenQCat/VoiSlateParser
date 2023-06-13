@@ -66,7 +66,8 @@ public class SlateLogItem
     
     public Timecode fileLength { get; set; }
     public List<FileInfo> bwfList { get; set; }
-    public List<FileInfo> videoList { get; set; }
+    public List<string> videoList { get; set; }
+    public string ubits { get; set; }
 
     public bool bwfSynced { get; set; }
     public bool videoSynced { get; set; }

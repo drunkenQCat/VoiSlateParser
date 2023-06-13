@@ -42,6 +42,8 @@
                     <GridViewColumn Header="Scene Note" DisplayMemberBinding="{Binding scnNote}" />
                     <GridViewColumn Header="OK Take" DisplayMemberBinding="{Binding okTk}" />
                     <GridViewColumn Header="OK Shot" DisplayMemberBinding="{Binding okSht}" />
+                    <GridViewColumn Header="Ubits" DisplayMemberBinding="{Binding ubits}" />
+                    <GridViewColumn Header="File" DisplayMemberBinding="{Binding bwfList[0].Name}" />
                 </GridView>
             </ListView.View>
         </ListView>
