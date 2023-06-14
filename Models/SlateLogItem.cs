@@ -71,4 +71,86 @@ public class SlateLogItem
 
     public bool bwfSynced { get; set; }
     public bool videoSynced { get; set; }
+
+    public bool Contains(string filterText)
+    {
+        if (scn.Contains(filterText)) return true;
+        if (sht.Contains(filterText)) return true;
+        if (tkNote.Contains(filterText)) return true;
+        if (shtNote.Contains(filterText)) return true;
+        if (scnNote.Contains(filterText)) return true;
+        if (fileName.Contains(filterText)) return true;
+        if (bwfList != null)
+        {
+            if (BwfContainsFileter(filterText)) return true;
+        }
+        if (videoList != null)
+        {
+            if (VideoContainsFileter(filterText)) return true;
+        }
+        return false;
+    }
+
+    private bool VideoContainsFileter(string filterText)
+    {
+        // find if any items in videoList contains fileterText
+        // if so, return true, else false.
+        // if videoList is null, return true.
+        // if videoList is empty, return true.
+        // if videoList is not empty, return true if any item contains filterText.
+
+        if (videoList == null)
+        {
+            {
+                return true;
+            }
+        }
+
+        if (videoList != null)
+        {
+            foreach (var video in videoList)
+            {
+                if (video.Contains(filterText))
+                {
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private bool BwfContainsFileter(string filterText)
+    {
+    // a function to find if any items in bwfList.Name contains fileterText
+    // if so, return true, else false.
+    // if bwfList is null, return true.
+    // if bwfList is empty, return true.
+    // if bwfList is not empty, return true if any item contains filterText.
+        if (bwfList == null)
+        {
+            {
+                return true;
+            }
+        }
+
+        if (bwfList != null)
+        {
+            foreach (var bwf in bwfList)
+            {
+                if (bwf.Name.Contains(filterText))
+                {
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+
 }

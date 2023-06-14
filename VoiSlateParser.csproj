@@ -55,6 +55,7 @@
   <ItemGroup>
     <Folder Include="obj\Debug\net7.0-windows\ref" />
     <Folder Include="obj\Debug\net7.0-windows\refint" />
+    <Folder Include="Views\Widgets" />
   </ItemGroup>
 
   <ItemGroup>

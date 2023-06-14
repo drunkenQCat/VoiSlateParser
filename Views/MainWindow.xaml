@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:VoiSlateParser.ViewModels"
-        xmlns:local="clr-namespace:VoiSlateParser"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
@@ -19,34 +18,38 @@
 
     <StackPanel>
         <StackPanel Orientation="Horizontal" Margin="10">
-            <Button Content="导入场记" Margin="0,0,10,0" Click="{Binding GetJsonPathCommand}" />
-            <Button Content="录音文件夹" Margin="0,0,10,0" Click="{Binding GetRecordPathCommand}" />
-            <!-- <Button Content="Save" Margin="0,0,10,0" Click="SaveButton_Click" /> -->
-            <!-- <Button Content="Load" Margin="0,0,10,0" Click="LoadButton_Click" /> -->
+            <Button Content="导入场记" Margin="0,0,10,0" Click="GetJsonPath_OnClick"/>
+            <Button Content="录音文件夹" Margin="0,0,10,0" Click="GetRecordPath_OnClick"/>
+            <StackPanel Orientation="Horizontal" Margin="10">
+                <TextBlock Text="搜索" Margin="0,0,5,0"/>
+                <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+                <!-- <ComboBox ItemsSource="{Binding ColumnHeaders}" SelectedItem="{Binding SelectedColumn}" Margin="0,0,5,0"/> -->
+                <!-- <Button Content="取消" Command="{Binding ClearFilterCommand}" Margin="0,0,5,0"/> -->
+            </StackPanel>
         </StackPanel>
 
-        <ListView 
+        <DataGrid 
             Margin="10" 
-            ItemsSource="{Binding LogItemList}"
+            ItemsSource="{Binding CollectionView}"
             SelectedItem="{Binding SelectedItem}"
+            CanUserAddRows="True"
         >
             
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="Filename" DisplayMemberBinding="{Binding fileName}" />
-                    <GridViewColumn Header="Scene" DisplayMemberBinding="{Binding scn}" />
-                    <GridViewColumn Header="Shot" DisplayMemberBinding="{Binding sht}" />
-                    <GridViewColumn Header="Take" DisplayMemberBinding="{Binding tk}" />
-                    <GridViewColumn Header="Take Note" DisplayMemberBinding="{Binding tkNote}" />
-                    <GridViewColumn Header="Shot Note" DisplayMemberBinding="{Binding shtNote}" />
-                    <GridViewColumn Header="Scene Note" DisplayMemberBinding="{Binding scnNote}" />
-                    <GridViewColumn Header="OK Take" DisplayMemberBinding="{Binding okTk}" />
-                    <GridViewColumn Header="OK Shot" DisplayMemberBinding="{Binding okSht}" />
-                    <GridViewColumn Header="Ubits" DisplayMemberBinding="{Binding ubits}" />
-                    <GridViewColumn Header="File" DisplayMemberBinding="{Binding bwfList[0].Name}" />
-                </GridView>
-            </ListView.View>
-        </ListView>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Filename" Binding="{Binding fileName}" />
+                <DataGridTextColumn Header="Scene" Binding="{Binding scn}" />
+                <DataGridTextColumn Header="Shot" Binding="{Binding sht}" />
+                <DataGridTextColumn Header="Take" Binding="{Binding tk}" />
+                <DataGridTextColumn Header="Take Note" Binding="{Binding tkNote}" />
+                <DataGridTextColumn Header="Shot Note" Binding="{Binding shtNote}" />
+                <DataGridTextColumn Header="Scene Note" Binding="{Binding scnNote}" />
+                <DataGridTextColumn Header="OK Take" Binding="{Binding okTk}" />
+                <DataGridTextColumn Header="OK Shot" Binding="{Binding okSht}" />
+                <DataGridTextColumn Header="Ubits" Binding="{Binding ubits}" />
+                <DataGridTextColumn Header="File" Binding="{Binding bwfList[0].Name}" />
+            </DataGrid.Columns>
+        </DataGrid>
+
 
         <!-- <TabControl -->
         <!--     SelectedIndex="0" -->

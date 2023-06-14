@@ -1,29 +1,33 @@
 using System;
-using System.IO;
-using System.Windows;
-using Newtonsoft.Json;
+using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VoiSlateParser.Models;
 using VoiSlateParser.Helper;
-using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-
-using System.Windows.Forms;
+using System.ComponentModel;
+using System.Windows.Data;
 using MessageBox = System.Windows.MessageBox;
 
 namespace VoiSlateParser.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
+        List<SlateLogItem> logItemList = new();
         [ObservableProperty]
-        ObservableCollection<SlateLogItem> logItemList = new();
+        ICollectionView collectionView;
+        
         [ObservableProperty]
         SlateLogItem? selectedItem;
+
+        [ObservableProperty] 
+        string filterText;
+        
+        
         string jsonPath = @"C:\TechnicalProjects\VoiSlateParser\data.json";
         string? recordPath;
         FileLoadingHelper fhelper = FileLoadingHelper.Instance;
+        public FilterType filterTypes;
 
         [RelayCommand]
         void LoadItems()
@@ -31,7 +35,16 @@ public partial class MainWindowViewModel : ObservableObject
             try
             {
                 fhelper.GetLogs(jsonPath);
-                LogItemList = fhelper.LogList;
+                logItemList = fhelper.LogList;
+                CollectionView = CollectionViewSource.GetDefaultView(logItemList);
+                CollectionView.Filter = (item) =>
+                {
+                    if (string.IsNullOrEmpty(FilterText)) return true;
+                    var im = item as SlateLogItem;
+                    // find all the fields in the slateLogItem, and find if the filter is 
+                    // contained in any of them.
+                    return im.Contains(FilterText);
+                };
             }
             catch (Exception ex)
             {
@@ -42,50 +55,25 @@ public partial class MainWindowViewModel : ObservableObject
         [RelayCommand]
         void AddItem(SlateLogItem newItem)
         {
-            LogItemList.Add(newItem);
+            logItemList.Add(newItem);
         }
 
         void DeleteItem()
         {
             if (SelectedItem != null)
             {
-                LogItemList.Remove((SlateLogItem)SelectedItem);
+                logItemList.Remove(SelectedItem);
             }
         }
 
-        [RelayCommand]
-        public void GetJsonPath()
-        {
-            var dialog = new Microsoft.Win32.OpenFileDialog()
-            {
-                Filter = "|*.json"
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                jsonPath = dialog.FileName;
-            }
-        }
-        
-        [RelayCommand]
-        public void GetRecordPath()
-        {
-            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-            folderBrowserDialog.ShowDialog();        //这个方法可以显示文件夹选择对话框
-            string selectedPath = folderBrowserDialog.SelectedPath;
-            fhelper.GetBwf(selectedPath);
-        }
+        partial void OnFilterTextChanged(string? oldValue, string newValue) => CollectionView.Refresh();
 
-        void SaveButton_Click()
-        {
-            try
-            {
-                string jsonData = JsonConvert.SerializeObject(logItemList, Formatting.Indented);
-                File.WriteAllText("data.json", jsonData);
-                MessageBox.Show("Data saved successfully.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving JSON data: {ex.Message}");
-            }
-        }
+        public void LoadLogItem(string path) => fhelper.GetLogs(path);
+        public void LoadBwf(string path) => fhelper.GetBwf(path);
+}
+
+public enum FilterType
+{
+    name,
+    date,
 }

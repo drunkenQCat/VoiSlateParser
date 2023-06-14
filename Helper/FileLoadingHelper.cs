@@ -5,7 +5,7 @@ using System.Linq;
 using ATL;
 using VideoTimecode;
 using ATL.AudioData;
-
+using Microsoft.VisualBasic.Logging;
 using VoiSlateParser.Models;
 using VoiSlateParser.Utilities;
 
@@ -17,7 +17,7 @@ class FileLoadingHelper
 
     public List<FileInfo> WavList = new();
 
-    public System.Collections.ObjectModel.ObservableCollection<SlateLogItem> LogList = new();
+    public List<SlateLogItem> LogList = new();
 
     public void GetBwf(string folderPath) //method to list all .wav files in given folder
     {
@@ -32,6 +32,7 @@ class FileLoadingHelper
     }
     public void GetLogs(string jsonPath) //method to list all .wav files in given folder
     {
+        LogList.Clear();
         string jsonText = File.ReadAllText(jsonPath);
         var list = Newtonsoft.Json.Linq.JArray.Parse(jsonText);
         foreach (var item in list)
