@@ -21,6 +21,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="HandyControl" Version="3.4.0" />
+    <PackageReference Include="Mantin.Controls.Wpf.EnumComboBox" Version="6.0.0" />
     <PackageReference Include="MetadataExtractor" Version="2.8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="VideoTimecode" Version="1.0.1" />

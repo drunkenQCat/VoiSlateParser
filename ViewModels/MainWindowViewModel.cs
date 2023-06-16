@@ -7,6 +7,7 @@ using VoiSlateParser.Helper;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
+using VoiSlateParser.Utilities;
 using MessageBox = System.Windows.MessageBox;
 
 namespace VoiSlateParser.ViewModels;
@@ -14,6 +15,7 @@ namespace VoiSlateParser.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
         List<SlateLogItem> logItemList = new();
+        AlePaser timelineAle;
         [ObservableProperty]
         ICollectionView collectionView;
         
@@ -51,6 +53,8 @@ public partial class MainWindowViewModel : ObservableObject
                 MessageBox.Show($"Error loading JSON data: {ex.Message}");
             }
         }
+        // [RelayCommand]
+        
 
         [RelayCommand]
         void AddItem(SlateLogItem newItem)
@@ -70,6 +74,20 @@ public partial class MainWindowViewModel : ObservableObject
 
         public void LoadLogItem(string path) => fhelper.GetLogs(path);
         public void LoadBwf(string path) => fhelper.GetBwf(path);
+
+        public void LoadAle(string path) => fhelper.GetAle(path);
+        
+        public void SaveAle(string path)
+        {
+            if(fhelper.Ale == null) return;
+            fhelper.WriteAleData(path);
+        }
+
+        [RelayCommand]
+        public void SaveBwf()
+        {
+            fhelper.WriteMetaData();
+        }
 }
 
 public enum FilterType

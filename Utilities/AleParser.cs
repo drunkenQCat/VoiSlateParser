@@ -15,6 +15,12 @@ public class AlePaser : IDisposable
 {
     CsvConfiguration config = new (CultureInfo.InvariantCulture)
     {
+        Delimiter = ",",
+        WhiteSpaceChars = new[] { ' ' },
+        NewLine = "\n"
+    };
+    CsvConfiguration aleConfig = new (CultureInfo.InvariantCulture)
+    {
         Delimiter = "\t",
         WhiteSpaceChars = new[] { ' ' },
         NewLine = "\n"
@@ -26,13 +32,39 @@ public class AlePaser : IDisposable
     public string Column = string.Empty;
     public string DataTrunk = string.Empty;
     public DataTable dt = new();
+    public string parserType = "csv";
 
-    public AlePaser(string path)
+    public AlePaser(FileInfo path)
     {
-        this.tempwriter = new(stream);
-        this.tempreader = new(stream);
-        ParseAle(path);
+        tempwriter = new(stream);
+        tempreader = new(stream);
+        if (path.Extension == "ale")
+        {
+            parserType = "ale";
+            ParseAle(path.FullName);
+        }
+        else if (path.Extension == "csv")
+        {
+            parserType = "csv";
+            ParseCsv(path.FullName);
+        }
         GenerateDataTable();
+    }
+
+    private void ParseCsv(string path)
+    {
+        string line = string.Empty;
+        using (StreamReader reader = new(path))
+        {
+            while ((line = reader.ReadLine()) != null)
+            {
+                tempwriter.WriteLine(line);
+            }
+            ConsolidateStream();
+            DataTrunk = tempreader.ReadToEnd();
+            Console.WriteLine("Data end");
+            stream.Position = 0;
+        }
     }
 
     private void ParseAle(string path)
@@ -116,7 +148,7 @@ public class AlePaser : IDisposable
         ConsolidateStream();
 
         // start to edit the ale
-        using (CsvReader r = new(tempreader, config))
+        using (CsvReader r = new(tempreader, (parserType == "ale") ? aleConfig : config))
         using (var dr = new CsvDataReader(r))
         {
             dt.Load(dr);
@@ -127,17 +159,24 @@ public class AlePaser : IDisposable
     {
         using (StreamWriter aleWriter = new(path))
         {
-            aleWriter.WriteLine("Heading");
-            aleWriter.WriteLine(Heading);
-            aleWriter.WriteLine("Column");
+            if (parserType == "ale")
+            {
+                aleWriter.WriteLine("Heading");
+                aleWriter.WriteLine(Heading);
+                aleWriter.WriteLine("Column");
+            }
+            dt.Columns.Remove("FileType");
             var headerList = dt.Columns.Cast<DataColumn>().Select(column => column.ColumnName);
-            var header = string.Join(config.Delimiter, headerList);
+            var header = string.Join((parserType == "ale") ?aleConfig.Delimiter:config.Delimiter, headerList);
             aleWriter.WriteLine(header);
-            aleWriter.WriteLine("Data");
+            if (parserType == "ale")
+            {
+                aleWriter.WriteLine("Data");
+            }
             foreach (DataRow row in dt.Rows)
             {
                 IEnumerable<string> fields = row.ItemArray.Select(field => field.ToString());
-                aleWriter.WriteLine(string.Join(config.Delimiter, fields));
+                aleWriter.WriteLine(string.Join((parserType == "ale") ?aleConfig.Delimiter:config.Delimiter, fields));
             }
         }
     }

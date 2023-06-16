@@ -1,12 +1,26 @@
 using System;
 using ATL;
 using VideoTimecode;
+using VoiSlateParser.Utilities;
+
 
 namespace VoiSlateParser.Utilities;
 
+internal class Comparor 
+{
+    static public bool IsTimeCrossed(BwfTimeCode itemA, BwfTimeCode itemV)
+    {
+        if (itemA.StartTc == null || itemV.StartTc == null) return false;
+        bool isVedGreaterThanAst = itemV.EndTc.ToTimeSpan().CompareTo(itemA.StartTc.ToTimeSpan()) > 0;
+        bool isAedGreaterThanVst = itemA.EndTc.ToTimeSpan().CompareTo(itemV.StartTc.ToTimeSpan()) > 0;
+        bool isCrossed = !(isAedGreaterThanVst && isVedGreaterThanAst);
+        return isCrossed;
+    }
+}
+
 public class BwfTimeCode
 {
-    FrameRate? FramRate;
+    public FrameRate? FramRate;
     public Timecode? StartTc;
     public Timecode? EndTc;
     public string Ubits;
@@ -17,6 +31,19 @@ public class BwfTimeCode
         this.StartTc = GetStartTc(bwf);
         this.EndTc = GetEndTc(bwf);
         this.Ubits = GetUbits(bwf);
+    }
+
+    public BwfTimeCode(Timecode st, Timecode ed)
+    {
+        this.StartTc = st;
+        this.EndTc = ed;
+        this.FramRate = st.FrameRate;
+    }
+    public BwfTimeCode(string st, string ed, FrameRate fps)
+    {
+        this.StartTc = new(st, fps);
+        this.EndTc = new(ed, fps);
+        this.FramRate = fps;
     }
 
     Timecode? GetStartTc(Track bwf)

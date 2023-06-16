@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using VideoTimecode;
 // ReSharper disable InconsistentNaming
@@ -21,13 +22,13 @@ public enum ShtStatus
 
 public class SlateLogItem
 {
-    public SlateLogItem(string scn,
+    public SlateLogItem(
+        string scn,
         string sht,
         int tk,
         string filenamePrefix,
         string filenameLinker,
         int filenameNum,
-
         string tkNote,
         string shtNote,
         string scnNote,
@@ -46,9 +47,14 @@ public class SlateLogItem
         this.okTk = okTk;
         this.okSht = okSht;
         this.bwfSynced = false;
+        this.startTc = new Timecode(0,FrameRate.FrameRate24);
+        this.endTc = new Timecode(0,FrameRate.FrameRate24);
+        this.fileLength = new Timecode(0,FrameRate.FrameRate24);
+        this.ubits = "00000000";
+        this.bwfList = new();
     }
 
-    public string fileName => filenamePrefix + filenameLinker + filenameNum.ToString();
+    public string fileName => filenamePrefix + filenameLinker + filenameNum.ToString().PadLeft(3,'0');
     public string scn { get; set; }
     public string sht { get; set; }
     public int tk { get; set; }
@@ -66,7 +72,7 @@ public class SlateLogItem
     
     public Timecode fileLength { get; set; }
     public List<FileInfo> bwfList { get; set; }
-    public List<string> videoList { get; set; }
+    public EnumerableRowCollection<DataRow> videoList { get; set; }
     public string ubits { get; set; }
 
     public bool bwfSynced { get; set; }
@@ -84,41 +90,6 @@ public class SlateLogItem
         {
             if (BwfContainsFileter(filterText)) return true;
         }
-        if (videoList != null)
-        {
-            if (VideoContainsFileter(filterText)) return true;
-        }
-        return false;
-    }
-
-    private bool VideoContainsFileter(string filterText)
-    {
-        // find if any items in videoList contains fileterText
-        // if so, return true, else false.
-        // if videoList is null, return true.
-        // if videoList is empty, return true.
-        // if videoList is not empty, return true if any item contains filterText.
-
-        if (videoList == null)
-        {
-            {
-                return true;
-            }
-        }
-
-        if (videoList != null)
-        {
-            foreach (var video in videoList)
-            {
-                if (video.Contains(filterText))
-                {
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-
         return false;
     }
 
