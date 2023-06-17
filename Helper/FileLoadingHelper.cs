@@ -3,10 +3,10 @@ using System;
 using System.Data;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 using ATL;
 using VideoTimecode;
 using ATL.AudioData;
-using Microsoft.VisualBasic.Logging;
 using VoiSlateParser.Models;
 using VoiSlateParser.Utilities;
 
@@ -21,14 +21,16 @@ class FileLoadingHelper
     public List<SlateLogItem> LogList = new();
 
     public AlePaser Ale;
+    FileInfo alePath;
     private EnumerableRowCollection<DataRow> _queryVideo;
     private EnumerableRowCollection<DataRow> _queryBwf;
     private EnumerableRowCollection<DataRow> _queryTimeline;
 
     public void GetBwf(string folderPath) //method to list all .wav files in given folder
     {
-        DirectoryInfo directory = new DirectoryInfo(folderPath); //create directory object for given folder path
-        FileInfo[] files = directory.GetFiles("*.wav", SearchOption.AllDirectories); //get all .wav files in directory
+        DirectoryInfo rootDir = new DirectoryInfo(folderPath); //create directory object for given folder path
+        var rootFiles = rootDir.GetFiles("*", SearchOption.AllDirectories);
+        var files = rootFiles.Where(s => (s.Extension.ToLower() == ".wav")).ToList<FileInfo>(); //get all .wav files in directory
         
         foreach (FileInfo file in files) //loop through each .wav file
         {
@@ -36,6 +38,7 @@ class FileLoadingHelper
         }
         MappingRecordFileInfo();
     }
+
     public void GetLogs(string jsonPath) //method to list all .wav files in given folder
     {
         LogList.Clear();
@@ -73,7 +76,6 @@ class FileLoadingHelper
         }
         MappingRecordFileInfo();
         MapppingAleInfo();
-
     }
 
     void MappingRecordFileInfo()
@@ -106,6 +108,27 @@ class FileLoadingHelper
             }
         }
     }
+    public void GetAle(string path)
+    {
+        alePath = new(path);
+        Ale = new AlePaser(alePath);
+        // linq, fild the "resolution" in dt, if it is not empty, "FileType" equal to "A"
+        _queryTimeline = from row in Ale.dt.AsEnumerable()
+            where row.Field<string>("Resolution") != "" 
+                  && row.Field<string>("Clip Directory") == ""
+            select row;
+        _queryBwf = from row in Ale.dt.AsEnumerable()
+            where row.Field<string>("Resolution") == "" 
+                  && row.Field<string>("File Name").Contains(".wav")
+            select row;
+        _queryVideo = from row in Ale.dt.AsEnumerable()
+            where row.Field<string>("Resolution") != ""
+                  && row.Field<string>("Clip Directory") != ""
+            orderby row.Field<string>("Start TC")
+            select row;
+        Ale.dt.AcceptChanges();
+        MapppingAleInfo();
+    }
 
     void MapppingAleInfo()
     {
@@ -132,19 +155,26 @@ class FileLoadingHelper
             foreach (var bwf in item.bwfList)
             {
                 Track tr = new(bwf.FullName);
-                tr.AdditionalFields["ixml.SCENE"] = item.scn + "-" + item.sht;
-                tr.AdditionalFields["ixml.TAKE"] = item.tk.ToString();
-                tr.AdditionalFields["ixml.NOTE"] = item.scnNote + "," + item.shtNote;
-                tr.AdditionalFields["ixml.CIRCLED"] = (item.okTk == TkStatus.ok) ? "TRUE" : "FALSE";
-                tr.AdditionalFields["ixml.TAKE_TYPE"] = (item.okTk == TkStatus.bad) ? "NO_GOOD" : "";
-                tr.AdditionalFields["ixml.WILD_TRACK"] = (item.tkNote.Contains("wild")) ? "TRUE" : "FALSE";
-                tr.AdditionalFields["bext.description"] = item.tkNote;
-                tr.SaveAsync();
+                WriteAdditional(tr, "ixml.SCENE", item.scn + "-" + item.sht);
+                WriteAdditional(tr, "ixml.TAKE", item.tk.ToString());
+                WriteAdditional(tr, "ixml.NOTE", item.scnNote + "," + item.shtNote);
+                WriteAdditional(tr, "ixml.CIRCLED", (item.okTk == TkStatus.ok) ? "TRUE" : "FALSE");
+                WriteAdditional(tr, "ixml.TAKE_TYPE", (item.okTk == TkStatus.bad) ? "NO_GOOD" : "DEFAULT");
+                WriteAdditional(tr, "ixml.WILD_TRACK", (item.tkNote.Contains("wild")) ? "TRUE" : "FALSE");
+                tr.Description = item.tkNote;
+                tr.Title = item.shtNote;
+                tr.Save();
             }
         }
     }
+    
+    void WriteAdditional(Track tr, string tag, string content)
+    {
+        if (tr.AdditionalFields.ContainsKey(tag)) tr.AdditionalFields[tag] = content;
+        else tr.AdditionalFields.Add(tag, content);
+    }
 
-    public void WriteAleData(string path)
+    public void WriteAleData(string p)
     {
         if (!Ale.dt.Columns.Contains("Flags")) Ale.dt.Columns.Add("Flags");
         if (!Ale.dt.Columns.Contains("Good Take")) Ale.dt.Columns.Add("Good Take");
@@ -153,45 +183,29 @@ class FileLoadingHelper
         if (!Ale.dt.Columns.Contains("Shot")) Ale.dt.Columns.Add("Shot");
         if (!Ale.dt.Columns.Contains("Take")) Ale.dt.Columns.Add("Take");
         if (!Ale.dt.Columns.Contains("Environment")) Ale.dt.Columns.Add("Environment");
+        // foreach (DataColumn col in Ale.dt.Columns) col.ReadOnly = false;
         foreach (var item in LogList)
         {
             foreach (var video in item.videoList)
             {
-                video["Scene"] = item.scn;
-                video["Shot"] = item.sht;
-                video["Take"] = item.tk;
-                video["Flags"] = (item.okSht == ShtStatus.notChecked) ? "" 
-                                    :(item.okSht == ShtStatus.nice) ? "Blue"
-                                    : "Green";
-                video["Good Take"] = (item.okSht == ShtStatus.notChecked) ? "":"1";
-                video["Description"] = item.shtNote;
-                video["Environment"] = item.scnNote;
+                // video["Scene"] = item.scn;
+                // video["Shot"] = item.sht;
+                // video["Take"] = item.tk;
+                // video["Flags"] = (item.okSht == ShtStatus.notChecked) ? "" 
+                //                     :(item.okSht == ShtStatus.nice) ? "Blue"
+                //                     : "Green";
+                // video["Good Take"] = (item.okSht == ShtStatus.notChecked) ? "":"1";
+                // video["Description"] = item.shtNote;
+                // video["Environment"] = item.scnNote;
             }
         }
         Ale.dt.AcceptChanges();
-        path = path + "output." + Ale.parserType;
+        if(!Directory.Exists(p)) Directory.CreateDirectory(p);
+        var fileName = Path.GetFileNameWithoutExtension(alePath.Name);
+        fileName = fileName + "_" + fileName.GetHashCode().ToString("x").Substring(0, 4);
+        string path = Path.Combine(p, fileName + alePath.Extension);
+        
         Ale.WriteAle(path);
     }
 
-    public void GetAle(string path)
-    {
-        FileInfo ale = new(path);
-        Ale = new AlePaser(ale);
-        // linq, fild the "resolution" in dt, if it is not empty, "FileType" equal to "A"
-        _queryTimeline = from row in Ale.dt.AsEnumerable()
-            where row.Field<string>("Resolution") != "" 
-                  && row.Field<string>("Clip Directory") == ""
-            select row;
-        _queryBwf = from row in Ale.dt.AsEnumerable()
-            where row.Field<string>("Resolution") == "" 
-                  && row.Field<string>("File Name").Contains(".wav")
-            select row;
-        _queryVideo = from row in Ale.dt.AsEnumerable()
-            where row.Field<string>("Resolution") != ""
-                  && row.Field<string>("Clip Directory") != ""
-            orderby row.Field<string>("Start TC")
-            select row;
-        Ale.dt.AcceptChanges();
-        MapppingAleInfo();
-    }
 }

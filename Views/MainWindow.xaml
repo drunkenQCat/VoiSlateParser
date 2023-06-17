@@ -61,7 +61,7 @@
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="5">
                         <Button Content="导入ALE" Margin="0,0,10,0" Click="GetAlePath_OnClick" />
                         <Button Content="写入元数据" Margin="0,0,10,0" Command="{Binding SaveBwfCommand}" />
-                        <Button Content="导出ALE" Margin="0,0,10,0" Click="GetRecordPath_OnClick" />
+                        <Button Content="导出ALE" Margin="0,0,10,0" Click="GetSavePath_OnClick" />
                         <!-- <ComboBox ItemsSource="{Binding ColumnHeaders}" SelectedItem="{Binding SelectedColumn}" Margin="0,0,5,0"/> -->
                         <!-- <Button Content="取消" Command="{Binding ClearFilterCommand}" Margin="0,0,5,0"/> -->
                     </StackPanel>

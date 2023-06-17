@@ -17,13 +17,13 @@ public class AlePaser : IDisposable
     {
         Delimiter = ",",
         WhiteSpaceChars = new[] { ' ' },
-        NewLine = "\n"
+        NewLine = "\r\n",
     };
     CsvConfiguration aleConfig = new (CultureInfo.InvariantCulture)
     {
         Delimiter = "\t",
         WhiteSpaceChars = new[] { ' ' },
-        NewLine = "\n"
+        NewLine = "\r\n"
     };
     MemoryStream stream = new();
     StreamWriter tempwriter;
@@ -38,12 +38,12 @@ public class AlePaser : IDisposable
     {
         tempwriter = new(stream);
         tempreader = new(stream);
-        if (path.Extension == "ale")
+        if (path.Extension.ToLower() == ".ale")
         {
             parserType = "ale";
             ParseAle(path.FullName);
         }
-        else if (path.Extension == "csv")
+        else if (path.Extension.ToLower() == ".csv")
         {
             parserType = "csv";
             ParseCsv(path.FullName);
@@ -56,8 +56,26 @@ public class AlePaser : IDisposable
         string line = string.Empty;
         using (StreamReader reader = new(path))
         {
+            // assert the first line is not blank
+            var csvHead = reader.ReadLine();
+            int headCommaCount = CountComma(csvHead!);
+            tempwriter.WriteLine(csvHead);
             while ((line = reader.ReadLine()) != null)
             {
+                // test the line is break or not
+                if(CountComma(line) < headCommaCount) 
+                {
+                    var fakeLine = string.Empty;
+                    while((fakeLine = reader.ReadLine()) != null)
+                    {
+                        line += fakeLine + '_';
+                        if(CountComma(line) >= headCommaCount)
+                        {
+                            line += "\n\n";
+                            break;
+                        }
+                    }
+                }
                 tempwriter.WriteLine(line);
             }
             ConsolidateStream();
@@ -144,11 +162,16 @@ public class AlePaser : IDisposable
     {
         // clean the empty lines
         string lines = RemoveEmptyLines(Column + DataTrunk);
+        using(StreamWriter _ = new("./temp.csv"))
+        {
+            _.WriteLine(lines);
+        }
         tempwriter.WriteLine(lines);
         ConsolidateStream();
 
         // start to edit the ale
-        using (CsvReader r = new(tempreader, (parserType == "ale") ? aleConfig : config))
+        using(StreamReader _ = new("./temp.csv"))
+        using (CsvReader r = new(_, (parserType == "ale") ? aleConfig : config))
         using (var dr = new CsvDataReader(r))
         {
             dt.Load(dr);
@@ -165,7 +188,6 @@ public class AlePaser : IDisposable
                 aleWriter.WriteLine(Heading);
                 aleWriter.WriteLine("Column");
             }
-            dt.Columns.Remove("FileType");
             var headerList = dt.Columns.Cast<DataColumn>().Select(column => column.ColumnName);
             var header = string.Join((parserType == "ale") ?aleConfig.Delimiter:config.Delimiter, headerList);
             aleWriter.WriteLine(header);
@@ -183,7 +205,31 @@ public class AlePaser : IDisposable
 
     private string RemoveEmptyLines(string toProcess)
     {
-        return Regex.Replace(toProcess, "^\\s*$\\n|\\r", string.Empty, RegexOptions.Multiline);
+        return Regex.Replace(toProcess, @"\n\n", string.Empty, RegexOptions.Multiline);
+    }
+    
+    private string RemoveExtraReturns(string toProcess)
+    {
+        string input = "dUBITS=26022200\n\ndSCENE=220226\n\ndTAKE=019\n\ndTAPE=RECORDING\n\ndFRAMERATE=25.000ND\n\ndSPEED=025.000-NDF\n\ndTRK3=BOOM\n\ndNOTE=Good Take\n";
+        string pattern = "\"([^\"]|\")*\"";
+        string output = Regex.Replace(input, pattern, m => m.Value.Replace("\n", ""));
+        return output;
+
+    }
+
+    int CountComma(string line)
+    {
+        bool inQuote = false;
+        int count = line.Count(c=>
+        {
+            if (c == '\"')
+            {
+                inQuote = !inQuote;
+            }
+            return c == ',' && !inQuote;
+        }
+        );
+        return count;
     }
 
     public void Dispose()
