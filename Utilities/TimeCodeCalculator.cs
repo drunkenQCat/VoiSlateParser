@@ -23,14 +23,21 @@ public class BwfTimeCode
     public FrameRate? FramRate;
     public Timecode? StartTc;
     public Timecode? EndTc;
+    public Timecode? DurationTc;
     public string Ubits;
 
     public BwfTimeCode(Track bwf)
     {
-        this.FramRate = GetFrameRate(bwf);
-        this.StartTc = GetStartTc(bwf);
-        this.EndTc = GetEndTc(bwf);
-        this.Ubits = GetUbits(bwf);
+        FramRate = GetFrameRate(bwf);
+        StartTc = GetStartTc(bwf);
+        EndTc = GetEndTc(bwf);
+        DurationTc = GetDurationTc();
+        Ubits = GetUbits(bwf);
+    }
+
+    private Timecode GetDurationTc()
+    {
+        return  new(EndTc.ToTimeSpan() - StartTc.ToTimeSpan(), FramRate);
     }
 
     public BwfTimeCode(Timecode st, Timecode ed)

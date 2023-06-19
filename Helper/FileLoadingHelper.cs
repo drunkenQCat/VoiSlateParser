@@ -99,6 +99,7 @@ class FileLoadingHelper
                 BwfTimeCode thisBwfTC = new(bwf);
                 item.startTc = thisBwfTC.StartTc??invalidTime;
                 item.endTc = thisBwfTC.EndTc??invalidTime;
+                item.fileLength = thisBwfTC.DurationTc??invalidTime;
                 item.ubits = thisBwfTC.Ubits;
                 item.bwfSynced = true;
             }

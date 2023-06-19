@@ -25,7 +25,6 @@
     <PackageReference Include="MetadataExtractor" Version="2.8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="VideoTimecode" Version="1.0.1" />
-    <PackageReference Include="z440.atl.core" Version="4.33.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -72,6 +71,10 @@
     <Resource Include="data.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\atldotnet\ATL\ATL.csproj" />
   </ItemGroup>
 
 </Project>

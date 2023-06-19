@@ -15,7 +15,7 @@
     </Window.DataContext>
     <hc:Interaction.Triggers>
         <hc:EventTrigger EventName="Loaded">
-            <hc:InvokeCommandAction Command="{Binding LoadItemsCommand}" />
+            <hc:InvokeCommandAction Command="{Binding LoadItemsCommand }" CommandParameter="{Binding InitJsonPath}"/>
         </hc:EventTrigger>
     </hc:Interaction.Triggers>
 
@@ -84,15 +84,15 @@
                         <StackPanel Orientation="Horizontal">
                             <StackPanel Orientation="Vertical" Margin="5">
                                 <TextBlock Text="Start Timecode:" FontWeight="Bold" />
-                                <TextBox Text="{Binding SelectedItem.startTc.Frames, Mode=OneWay}" />
+                                <TextBox Text="{Binding SelectedItem.startTcString, Mode=OneWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Vertical" Margin="5">
                                 <TextBlock Text="End Timecode:" FontWeight="Bold" />
-                                <TextBox Text="{Binding SelectedItem.endTc.TotalFrames, Mode=OneWay}" />
+                                <TextBox Text="{Binding SelectedItem.endTcString, Mode=OneWay}" />
                             </StackPanel>
                             <StackPanel Orientation="Vertical" Margin="5">
                                 <TextBlock Text="File Length:" FontWeight="Bold" />
-                                <TextBox Text="{Binding SelectedItem.fileLength.TotalFrames, Mode=OneWay}" />
+                                <TextBox Text="{Binding SelectedItem.fileLengthString, Mode=OneWay}" />
                             </StackPanel>
                         </StackPanel>
 
@@ -157,7 +157,7 @@
                         <StackPanel>
                             <TextBlock Text="Video List:" FontWeight="Bold" />
                             <ScrollViewer Height="50" Width="200">
-                                <ListBox ItemsSource="{Binding SelectedItem.videoList}" />
+                                <ListBox ItemsSource="{Binding SelectedItem.videoListNames}" />
                             </ScrollViewer>
                         </StackPanel>
 

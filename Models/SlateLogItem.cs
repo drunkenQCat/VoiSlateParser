@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using VideoTimecode;
+
+using VoiSlateParser.Helper;
 // ReSharper disable InconsistentNaming
 
 namespace VoiSlateParser.Models;
@@ -64,15 +67,25 @@ public class SlateLogItem
     public string tkNote { get; set; }
     public string shtNote { get; set; }
     public string scnNote { get; set; }
+    // public string scnNote 
+    // {
+    //     get => shtNote;
+    //     set => scnNote = EncodingHelper.ConvertUtfToIso(value);
+    // }
+
     public TkStatus okTk { get; set; }
     public ShtStatus okSht { get; set; }
     
     public Timecode startTc { get; set; }
+    public string startTcString => startTc.ToString();
     public Timecode endTc { get; set; }
-    
+    public string endTcString => endTc.ToString();
     public Timecode fileLength { get; set; }
+    public string fileLengthString => fileLength.ToString();
+    
     public List<FileInfo> bwfList { get; set; }
     public EnumerableRowCollection<DataRow> videoList { get; set; }
+    public List<string?> videoListNames => (videoList != null)? videoList.Select(row => row["File Name"].ToString()).ToList():new();
     public string ubits { get; set; }
 
     public bool bwfSynced { get; set; }

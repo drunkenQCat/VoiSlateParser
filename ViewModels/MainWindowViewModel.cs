@@ -26,13 +26,14 @@ public partial class MainWindowViewModel : ObservableObject
         string filterText;
         
         
-        string jsonPath = @"C:\TechnicalProjects\VoiSlateParser\data.json";
+        [ObservableProperty]
+        string initJsonPath = @"C:\TechnicalProjects\VoiSlateParser\data.json";
         string? recordPath;
         FileLoadingHelper fhelper = FileLoadingHelper.Instance;
         public FilterType filterTypes;
 
         [RelayCommand]
-        void LoadItems()
+        void IniLoadItems(string jsonPath)
         {
             try
             {
@@ -72,7 +73,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         partial void OnFilterTextChanged(string? oldValue, string newValue) => CollectionView.Refresh();
 
-        public void LoadLogItem(string path) => fhelper.GetLogs(path);
+        public void LoadLogItem(string path) => IniLoadItems(path);
         public void LoadBwf(string path) => fhelper.GetBwf(path);
 
         public void LoadAle(string path) => fhelper.GetAle(path);
