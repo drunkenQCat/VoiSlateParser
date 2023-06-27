@@ -35,8 +35,10 @@ public class SlateLogItem
         string tkNote,
         string shtNote,
         string scnNote,
+        List<string> trackList,
         TkStatus okTk = TkStatus.notChecked,
-        ShtStatus okSht = ShtStatus.notChecked)
+        ShtStatus okSht = ShtStatus.notChecked
+        )
     {
         this.scn = scn;
         this.sht = sht;
@@ -47,6 +49,7 @@ public class SlateLogItem
         this.tkNote = tkNote;
         this.shtNote = shtNote;
         this.scnNote = scnNote;
+        this.trackList = trackList;
         this.okTk = okTk;
         this.okSht = okSht;
         this.bwfSynced = false;
@@ -67,6 +70,8 @@ public class SlateLogItem
     public string tkNote { get; set; }
     public string shtNote { get; set; }
     public string scnNote { get; set; }
+    public List<string>? trackList{ get; set;}
+
     // public string scnNote 
     // {
     //     get => shtNote;

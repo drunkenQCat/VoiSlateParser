@@ -11,9 +11,13 @@ internal class Comparor
     static public bool IsTimeCrossed(BwfTimeCode itemA, BwfTimeCode itemV)
     {
         if (itemA.StartTc == null || itemV.StartTc == null) return false;
-        bool isVedGreaterThanAst = itemV.EndTc.ToTimeSpan().CompareTo(itemA.StartTc.ToTimeSpan()) > 0;
-        bool isAedGreaterThanVst = itemA.EndTc.ToTimeSpan().CompareTo(itemV.StartTc.ToTimeSpan()) > 0;
-        bool isCrossed = !(isAedGreaterThanVst && isVedGreaterThanAst);
+        bool isVedGreaterThanAst = itemV.EndTc.ToTimeSpan().CompareTo(itemA.StartTc.ToTimeSpan()) < 0;
+        bool isAedGreaterThanVst = itemA.EndTc.ToTimeSpan().CompareTo(itemV.StartTc.ToTimeSpan()) < 0;
+        bool isCrossed = !(isAedGreaterThanVst || isVedGreaterThanAst);
+        if (isCrossed)
+        {
+            Console.WriteLine($"Timecode {itemA.StartTc} and {itemV.StartTc} are crossed");
+        }
         return isCrossed;
     }
 }

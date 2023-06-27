@@ -59,6 +59,17 @@ class FileLoadingHelper
             string scnNote = item["scnNote"]!.ToString();
             TkStatus okTk = (TkStatus)Enum.Parse(typeof(TkStatus), item["okTk"]!.ToString());
             ShtStatus okSht = (ShtStatus)Enum.Parse(typeof(ShtStatus), item["okSht"]!.ToString());
+            // to parse the shot notes and track list
+            var shtNotePreParse = shtNote.Split('<');
+            shtNote = shtNotePreParse[0];
+            List<String> trackList = new List<String>();
+            if (shtNotePreParse.Length > 1) {
+                shtNotePreParse = shtNotePreParse.Skip(1).ToArray();
+                foreach (var element in shtNotePreParse) { // iterate through the remaining elements
+                    trackList.Add(element.Replace("/>", "")); // strip "/>" and add to trackList
+                }
+            }
+
 
             SlateLogItem newLogItem = new SlateLogItem(
                 scn,
@@ -70,6 +81,7 @@ class FileLoadingHelper
                 tkNote,
                 shtNote,
                 scnNote,
+                trackList,
                 okTk,
                 okSht);
             LogList.Add(newLogItem);
@@ -156,19 +168,32 @@ class FileLoadingHelper
             foreach (var bwf in item.bwfList)
             {
                 Track tr = new(bwf.FullName);
+                var originalNote = tr.AdditionalFields["ixml.Note"]??"";
+                var editedNote = item.scnNote + "," + item.shtNote + originalNote;
                 WriteAdditional(tr, "ixml.SCENE", item.scn + "-" + item.sht);
                 WriteAdditional(tr, "ixml.TAKE", item.tk.ToString());
-                WriteAdditional(tr, "ixml.NOTE", item.scnNote + "," + item.shtNote);
+                WriteAdditional(tr, "ixml.NOTE", editedNote);
                 WriteAdditional(tr, "ixml.CIRCLED", (item.okTk == TkStatus.ok) ? "TRUE" : "FALSE");
                 WriteAdditional(tr, "ixml.TAKE_TYPE", (item.okTk == TkStatus.bad) ? "NO_GOOD" : "DEFAULT");
                 WriteAdditional(tr, "ixml.WILD_TRACK", (item.tkNote.Contains("wild")) ? "TRUE" : "FALSE");
+                // WriteTrackList(tr, item.trackList);
                 tr.Description = item.tkNote;
                 tr.Title = item.shtNote;
                 tr.Save();
             }
         }
     }
-    
+
+    private void WriteTrackList(Track tr, List<string>? trackList)
+    {
+        if(trackList == null) return;
+        if(trackList.Count == 0) return; // check if trackList has no items
+        foreach (string track in trackList)
+        {
+            WriteAdditional(tr, "skj", track);
+        }
+    }
+
     void WriteAdditional(Track tr, string tag, string content)
     {
         if (tr.AdditionalFields.ContainsKey(tag)) tr.AdditionalFields[tag] = content;
@@ -184,20 +209,20 @@ class FileLoadingHelper
         if (!Ale.dt.Columns.Contains("Shot")) Ale.dt.Columns.Add("Shot");
         if (!Ale.dt.Columns.Contains("Take")) Ale.dt.Columns.Add("Take");
         if (!Ale.dt.Columns.Contains("Environment")) Ale.dt.Columns.Add("Environment");
-        // foreach (DataColumn col in Ale.dt.Columns) col.ReadOnly = false;
+        foreach (DataColumn col in Ale.dt.Columns) col.ReadOnly = false;
         foreach (var item in LogList)
         {
             foreach (var video in item.videoList)
             {
-                // video["Scene"] = item.scn;
-                // video["Shot"] = item.sht;
-                // video["Take"] = item.tk;
-                // video["Flags"] = (item.okSht == ShtStatus.notChecked) ? "" 
-                //                     :(item.okSht == ShtStatus.nice) ? "Blue"
-                //                     : "Green";
-                // video["Good Take"] = (item.okSht == ShtStatus.notChecked) ? "":"1";
-                // video["Description"] = item.shtNote;
-                // video["Environment"] = item.scnNote;
+                video["Scene"] = item.scn;
+                video["Shot"] = item.sht;
+                video["Take"] = item.tk;
+                video["Flags"] = (item.okSht == ShtStatus.notChecked) ? "" 
+                                    :(item.okSht == ShtStatus.nice) ? "Blue"
+                                    : "Green";
+                video["Good Take"] = (item.okSht == ShtStatus.notChecked) ? "":"1";
+                video["Description"] = item.shtNote;
+                video["Environment"] = item.scnNote;
             }
         }
         Ale.dt.AcceptChanges();

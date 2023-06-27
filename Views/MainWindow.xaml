@@ -159,6 +159,11 @@
                             <ScrollViewer Height="50" Width="200">
                                 <ListBox ItemsSource="{Binding SelectedItem.videoListNames}" />
                             </ScrollViewer>
+                            <TextBlock Text="Tracks" FontWeight="Bold" />
+                            <ScrollViewer Height="50" Width="200">
+                                <ListBox ItemsSource="{Binding SelectedItem.trackList}">
+                                </ListBox>
+                            </ScrollViewer>
                         </StackPanel>
 
                     </StackPanel>
