@@ -3,10 +3,14 @@ using System;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Input;
 using Newtonsoft.Json;
 using ATL;
 using VideoTimecode;
 using ATL.AudioData;
+using HandyControl.Tools.Extension;
 using VoiSlateParser.Models;
 using VoiSlateParser.Utilities;
 
@@ -44,83 +48,134 @@ class FileLoadingHelper
         LogList.Clear();
         string jsonText = File.ReadAllText(jsonPath);
         var list = Newtonsoft.Json.Linq.JArray.Parse(jsonText);
+        List<Task> loadLog = new();
         foreach (var item in list)
         {
+            async Task creatNewLog()
+            {
+                string scn = item["scn"]!.ToString();
+                string sht = item["sht"]!.ToString();
+                int tk = int.Parse(item["tk"]!.ToString());
+                string filenamePrefix = item["filenamePrefix"]!.ToString();
+                string filenameLinker = item["filenameLinker"]!.ToString();
+                int filenameNum = int.Parse(item["filenameNum"]!.ToString());
 
-            string scn = item["scn"]!.ToString();
-            string sht = item["sht"]!.ToString();
-            int tk = int.Parse(item["tk"]!.ToString());
-            string filenamePrefix = item["filenamePrefix"]!.ToString();
-            string filenameLinker = item["filenameLinker"]!.ToString();
-            int filenameNum = int.Parse(item["filenameNum"]!.ToString());
-
-            string tkNote = item["tkNote"]!.ToString();
-            string shtNote = item["shtNote"]!.ToString();
-            string scnNote = item["scnNote"]!.ToString();
-            TkStatus okTk = (TkStatus)Enum.Parse(typeof(TkStatus), item["okTk"]!.ToString());
-            ShtStatus okSht = (ShtStatus)Enum.Parse(typeof(ShtStatus), item["okSht"]!.ToString());
-            // to parse the shot notes and track list
-            var shtNotePreParse = shtNote.Split('<');
-            shtNote = shtNotePreParse[0];
-            List<String> trackList = new List<String>();
-            if (shtNotePreParse.Length > 1) {
-                shtNotePreParse = shtNotePreParse.Skip(1).ToArray();
-                foreach (var element in shtNotePreParse) { // iterate through the remaining elements
-                    trackList.Add(element.Replace("/>", "")); // strip "/>" and add to trackList
+                string tkNote = item["tkNote"]!.ToString();
+                string shtNote = item["shtNote"]!.ToString();
+                string scnNote = item["scnNote"]!.ToString();
+                TkStatus okTk = (TkStatus)Enum.Parse(typeof(TkStatus), item["okTk"]!.ToString());
+                ShtStatus okSht = (ShtStatus)Enum.Parse(typeof(ShtStatus), item["okSht"]!.ToString());
+                // to parse the shot notes and track list
+                var shtNotePreParse = shtNote.Split('<');
+                shtNote = shtNotePreParse[0];
+                List<String> trackList = new List<String>();
+                if (shtNotePreParse.Length > 1)
+                {
+                    shtNotePreParse = shtNotePreParse.Skip(1).ToArray();
+                    foreach (var element in shtNotePreParse)
+                    {
+                        // iterate through the remaining elements
+                        trackList.Add(element.Replace("/>", "")); // strip "/>" and add to trackList
+                    }
                 }
+
+
+                SlateLogItem newLogItem = new SlateLogItem(
+                    scn,
+                    sht,
+                    tk,
+                    filenamePrefix,
+                    filenameLinker,
+                    filenameNum,
+                    tkNote,
+                    shtNote,
+                    scnNote,
+                    trackList,
+                    okTk,
+                    okSht);
+                LogList.Add(newLogItem);
             }
 
-
-            SlateLogItem newLogItem = new SlateLogItem(
-                scn,
-                sht,
-                tk,
-                filenamePrefix,
-                filenameLinker,
-                filenameNum,
-                tkNote,
-                shtNote,
-                scnNote,
-                trackList,
-                okTk,
-                okSht);
-            LogList.Add(newLogItem);
-        }
-        MappingRecordFileInfo();
-        MapppingAleInfo();
+            loadLog.Add(creatNewLog()); 
+        } 
+        Task.WhenAll(loadLog).ContinueWith(t =>
+        {
+            MappingRecordFileInfo(); 
+            MapppingAleInfo();
+        } );
     }
 
     void MappingRecordFileInfo()
     {
         if (LogList.Count == 0 || WavList.Count == 0)
             return;
+        List<Task> mappingTasks = new();
         foreach (var item in LogList)
         {
-            var name = item.fileName;
-            var query =
+            async Task MapItemToBwf()
+            {
+                var name = item.fileName;
+                var query =
+                    from info in WavList
+                    where info.Name.Contains(name)
+                    orderby info.Name
+                    select info;
+                query = FindAnyPossible(query, item);
+                var files = query.ToList();
+                item.bwfList = files;
+                try
+                {
+                    GetBwfTimecode(files, item);
+                }
+                catch
+                {
+                    item.bwfSynced = false;
+                }
+            }
+            mappingTasks.Add(MapItemToBwf());
+        }
+        Task.WhenAll(mappingTasks);
+    }
+
+    private static void GetBwfTimecode(List<FileInfo> files, SlateLogItem item)
+    {
+        Timecode invalidTime = new(0, FrameRate.FrameRate24);
+        Track bwf = new Track(files[0].FullName);
+        BwfTimeCode thisBwfTC = new(bwf);
+        item.startTc = thisBwfTC.StartTc ?? invalidTime;
+        item.endTc = thisBwfTC.EndTc ?? invalidTime;
+        item.fileLength = thisBwfTC.DurationTc ?? invalidTime;
+        item.ubits = thisBwfTC.Ubits;
+        item.bwfSynced = true;
+    }
+
+    private IOrderedEnumerable<FileInfo> FindAnyPossible(IOrderedEnumerable<FileInfo> query, SlateLogItem item)
+    {
+        // find if without linker, is there any possible file
+        if (!query.Any())
+        {
+            Regex ambigReg = new($".*{item.filenamePrefix}.*{item.filenameNum.ToString().PadLeft(3, '0')}.wav.*");
+            query =
                 from info in WavList
-                where info.Name.Contains(name)
+                where ambigReg.IsMatch(info.Name)
                 orderby info.Name
                 select info;
-            var files = query.ToList();
-            item.bwfList = files;
-            Timecode invalidTime = new(0, FrameRate.FrameRate24);
-            try
-            {
-                Track bwf = new Track(files[0].FullName);
-                BwfTimeCode thisBwfTC = new(bwf);
-                item.startTc = thisBwfTC.StartTc??invalidTime;
-                item.endTc = thisBwfTC.EndTc??invalidTime;
-                item.fileLength = thisBwfTC.DurationTc??invalidTime;
-                item.ubits = thisBwfTC.Ubits;
-                item.bwfSynced = true;
-            }
-            catch
-            {
-                item.bwfSynced = false;
-            }
         }
+        // find if there is any file named match the scene-shot-take or scene-take
+        if (!query.Any())
+        {
+            var ambigRegA = new Regex($".*{item.scn}.*{item.sht}.*{item.tk}");
+            var ambigRegB = new Regex($".*{item.scn}.*{item.tk}");
+            query =
+                from info in WavList
+                where ambigRegA.IsMatch(info.Name) || ambigRegB.IsMatch(info.Name)
+                orderby info.Name
+                select info;
+        }
+
+        return query;
     }
+
     public void GetAle(string path)
     {
         alePath = new(path);
@@ -145,43 +200,64 @@ class FileLoadingHelper
 
     void MapppingAleInfo()
     {
-        if (LogList.Count == 0 || Ale == null)
-        return;
+        if (LogList.Count == 0 || Ale == null) return;
         foreach (var item in LogList)
         {
-            BwfTimeCode bwfTime = new(item.startTc, item.endTc);
-            var query = _queryVideo.Where(info =>
+            Task.Run(() =>
             {
-                var startTime = info.Field<string>("Start TC");
-                var endTime = info.Field<string>("End TC");
-                BwfTimeCode videoTime = new BwfTimeCode(startTime, endTime, bwfTime.FramRate);
-                return Comparor.IsTimeCrossed(bwfTime, videoTime);
+                BwfTimeCode bwfTime = new(item.startTc, item.endTc);
+                var query = _queryVideo.Where(info =>
+                {
+                    var startTime = info.Field<string>("Start TC");
+                    var endTime = info.Field<string>("End TC");
+                    BwfTimeCode videoTime = new BwfTimeCode(startTime, endTime, bwfTime.FramRate);
+                    return Comparor.IsTimeCrossed(bwfTime, videoTime);
+                });
+                item.videoList = query;
             });
-            item.videoList = query;
         }
     }   
 
-    public void WriteMetaData()
+    public async Task WriteMetaData()
     {
+        Task WriteSingleBwf(FileInfo bwf, SlateLogItem item)
+        {
+            Track tr = new(bwf.FullName);
+            var originalNote = "";
+            try
+            {
+                originalNote = tr.AdditionalFields["ixml.Note"];
+            }
+            catch
+            {
+                originalNote = "";
+            }
+
+            var editedNote = item.scnNote + "," + item.shtNote + originalNote;
+            WriteAdditional(tr, "ixml.SCENE", item.scn + "-" + item.sht);
+            WriteAdditional(tr, "ixml.TAKE", item.tk.ToString());
+            WriteAdditional(tr, "ixml.NOTE", editedNote);
+            WriteAdditional(tr, "ixml.CIRCLED", (item.okTk == TkStatus.ok) ? "TRUE" : "FALSE");
+            WriteAdditional(tr, "ixml.TAKE_TYPE", (item.okTk == TkStatus.bad) ? "NO_GOOD" : "DEFAULT");
+            WriteAdditional(tr, "ixml.WILD_TRACK", (item.tkNote.Contains("wild")) ? "TRUE" : "FALSE");
+            // WriteTrackList(tr, item.trackList);
+            tr.Description = item.tkNote;
+            tr.Title = item.shtNote;
+            tr.Save();
+            Console.WriteLine($"{tr.Path} loaded");
+            return Task.CompletedTask;
+        }
+
+        List<Task> taskList = new();
         foreach (var item in LogList)
         {
             foreach (var bwf in item.bwfList)
             {
-                Track tr = new(bwf.FullName);
-                var originalNote = tr.AdditionalFields["ixml.Note"]??"";
-                var editedNote = item.scnNote + "," + item.shtNote + originalNote;
-                WriteAdditional(tr, "ixml.SCENE", item.scn + "-" + item.sht);
-                WriteAdditional(tr, "ixml.TAKE", item.tk.ToString());
-                WriteAdditional(tr, "ixml.NOTE", editedNote);
-                WriteAdditional(tr, "ixml.CIRCLED", (item.okTk == TkStatus.ok) ? "TRUE" : "FALSE");
-                WriteAdditional(tr, "ixml.TAKE_TYPE", (item.okTk == TkStatus.bad) ? "NO_GOOD" : "DEFAULT");
-                WriteAdditional(tr, "ixml.WILD_TRACK", (item.tkNote.Contains("wild")) ? "TRUE" : "FALSE");
-                // WriteTrackList(tr, item.trackList);
-                tr.Description = item.tkNote;
-                tr.Title = item.shtNote;
-                tr.Save();
+                taskList.Add(WriteSingleBwf(bwf, item));
             }
         }
+
+        await Task.WhenAll(taskList);
     }
 
     private void WriteTrackList(Track tr, List<string>? trackList)

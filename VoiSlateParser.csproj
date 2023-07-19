@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>记录.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +16,7 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Remove="obj\**" />
+    <Page Remove="Views\Widgets\AlertDialog.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,12 +52,12 @@
     <Compile Include="obj\Debug\net7.0-windows\Views\MainWindow.g.cs" />
     <Compile Include="obj\Debug\net7.0-windows\VoiSlateParser.AssemblyInfo.cs" />
     <Compile Remove="obj\**" />
+    <Compile Remove="Views\Widgets\AlertDialog.xaml.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="obj\Debug\net7.0-windows\ref" />
     <Folder Include="obj\Debug\net7.0-windows\refint" />
-    <Folder Include="Views\Widgets" />
   </ItemGroup>
 
   <ItemGroup>
@@ -68,13 +70,20 @@
 
   <ItemGroup>
     <None Remove="data.json" />
-    <Resource Include="data.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\atldotnet\ATL\ATL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="bin\Debug\net7.0-windows\test_data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AdditionalFiles>
+    <None Remove="test_data.json" />
+    <AdditionalFiles Include="test_data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AdditionalFiles>
   </ItemGroup>
 
 </Project>

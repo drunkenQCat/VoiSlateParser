@@ -15,7 +15,7 @@
     </Window.DataContext>
     <hc:Interaction.Triggers>
         <hc:EventTrigger EventName="Loaded">
-            <hc:InvokeCommandAction Command="{Binding LoadItemsCommand }" CommandParameter="{Binding InitJsonPath}"/>
+            <hc:InvokeCommandAction Command="{Binding IniLoadItemsCommand  }" CommandParameter="{Binding InitJsonPath}"/>
         </hc:EventTrigger>
     </hc:Interaction.Triggers>
 
@@ -34,7 +34,8 @@
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <Button Content="导入场记" Margin="0,0,10,0" Click="GetJsonPath_OnClick" />
-                        <Button Content="录音文件夹" Margin="0,0,10,0" Click="GetRecordPath_OnClick" />
+                        <Button Content="录音文件夹" Margin="0,0,10,0" Click="GetRecordPath_OnClick" 
+                                IsEnabled="{Binding IsBwfImportingEnabled}"/>
                         <TextBox
                             Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
                             Width="130"
@@ -59,9 +60,13 @@
                         </ListView.View>
                     </ListView>
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="5">
-                        <Button Content="导入ALE" Margin="0,0,10,0" Click="GetAlePath_OnClick" />
-                        <Button Content="写入元数据" Margin="0,0,10,0" Command="{Binding SaveBwfCommand}" />
-                        <Button Content="导出ALE" Margin="0,0,10,0" Click="GetSavePath_OnClick" />
+                        <Button Content="导入ALE" Margin="0,0,10,0" Click="GetAlePath_OnClick" 
+                        IsEnabled="{Binding IsAleImportingEnabled}"
+                        />
+                        <Button Content="写入元数据" Margin="0,0,10,0" Command="{Binding SaveBwfCommand}" 
+                        IsEnabled="{Binding IsWritingEnabled}"/>
+                        <Button Content="导出ALE" Margin="0,0,10,0" Click="GetSavePath_OnClick" 
+                        IsEnabled="{Binding IsAleImportingEnabled}"/>
                         <!-- <ComboBox ItemsSource="{Binding ColumnHeaders}" SelectedItem="{Binding SelectedColumn}" Margin="0,0,5,0"/> -->
                         <!-- <Button Content="取消" Command="{Binding ClearFilterCommand}" Margin="0,0,5,0"/> -->
                     </StackPanel>

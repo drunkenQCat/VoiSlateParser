@@ -4,10 +4,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VoiSlateParser.Models;
 using VoiSlateParser.Helper;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows.Data;
+using HandyControl.Controls;
 using VoiSlateParser.Utilities;
+using VoiSlateParser.Views.Widgets;
 using MessageBox = System.Windows.MessageBox;
 
 namespace VoiSlateParser.ViewModels;
@@ -27,7 +29,20 @@ public partial class MainWindowViewModel : ObservableObject
         
         
         [ObservableProperty]
-        string initJsonPath = @"C:\TechnicalProjects\VoiSlateParser\data.json";
+        string initJsonPath = @"C:\TechnicalProjects\VoiSlateParser\test_data.json";
+
+        [ObservableProperty] 
+        bool isBwfImportingEnabled = false;
+        
+        [ObservableProperty] 
+        bool isWritingEnabled = false;
+        
+        [ObservableProperty] 
+        bool isAleImportingEnabled = false;
+        
+        [ObservableProperty] 
+        bool isAleExportingEnabled = false;
+        
         string? recordPath;
         FileLoadingHelper fhelper = FileLoadingHelper.Instance;
         public FilterType filterTypes;
@@ -63,6 +78,7 @@ public partial class MainWindowViewModel : ObservableObject
             logItemList.Add(newItem);
         }
 
+        [RelayCommand]
         void DeleteItem()
         {
             if (SelectedItem != null)
@@ -71,24 +87,44 @@ public partial class MainWindowViewModel : ObservableObject
             }
         }
 
+        [RelayCommand]
+        public async void SaveBwf()
+        {
+            IsWritingEnabled = false;
+            var d = Dialog.Show<WaitingDialog>();
+            Task task = new TaskFactory().StartNew(() => fhelper.WriteMetaData());
+            await task;
+            d.Close();
+            IsWritingEnabled = true;
+        }
         partial void OnFilterTextChanged(string? oldValue, string newValue) => CollectionView.Refresh();
 
-        public void LoadLogItem(string path) => IniLoadItems(path);
-        public void LoadBwf(string path) => fhelper.GetBwf(path);
+        public void LoadLogItem(string path)
+        {
+            Task.Run(() => IniLoadItems(path));
+            IsBwfImportingEnabled = true;
+        }
 
-        public void LoadAle(string path) => fhelper.GetAle(path);
-        
+        public void LoadBwf(string path)
+        {
+            Task.Run(() => fhelper.GetBwf(path));
+            IsAleImportingEnabled = true;
+            IsWritingEnabled = true;
+        }
+
+        public void LoadAle(string path)
+        {
+            Task.Run(() => fhelper.GetAle(path));
+            IsAleExportingEnabled = true;
+        }
+
         public void SaveAle(string path)
         {
             if(fhelper.Ale == null) return;
-            fhelper.WriteAleData(path);
+            Task.Run(() => fhelper.WriteAleData(path));
+            
         }
 
-        [RelayCommand]
-        public void SaveBwf()
-        {
-            fhelper.WriteMetaData();
-        }
 }
 
 public enum FilterType
