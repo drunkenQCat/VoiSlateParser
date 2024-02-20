@@ -25,11 +25,11 @@ public partial class MainWindowViewModel : ObservableObject
         SlateLogItem? selectedItem;
 
         [ObservableProperty] 
-        string filterText;
+        string filterText = "";
         
         
         [ObservableProperty]
-        string initJsonPath = @"C:\TechnicalProjects\VoiSlateParser\test_data.json";
+        string initJsonPath = @"test_data.json";
 
         [ObservableProperty] 
         bool isBwfImportingEnabled = false;
